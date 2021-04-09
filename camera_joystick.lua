@@ -28,7 +28,7 @@ end
 local LeftXAxis = {'axes',1,1} -- move left-right
 local LeftYAxis = {'axes',2,1} -- move forward-backward
 local RightXAxis = {'axes',3,1} --turn left-right
-local RightYAxis = {'axes',66,1} --turn up-down
+local RightYAxis = {'axes',6,1} --turn up-down
 local RightTrigger = {'axes',8,1} -- move up
 local LeftTrigger = {'buttons',9, 1} --move down
 local DpadUp = {'hats',1,1} -- increase speed
@@ -41,8 +41,8 @@ local Xbutton = {'buttons',4,1} -- toggle debug print mode
 local Ybutton = {'buttons',5,1} -- toggle debug print mode
 local LShoulderbutton = {'buttons',7,1} -- decrease game speed
 local RShoulderbutton = {'buttons',8,1} -- increase game speed
-local RStickButton = {'buttons',50,1} -- select unit nearest to center of screen? TODO
-local LStickButton = {'buttons',"shart",1} -- delect all? TODO
+local RStickButton = {'buttons',14,1} -- select unit nearest to center of screen? TODO
+local LStickButton = {'buttons',15,1} -- delect all? TODO
 
 --[[
 ---------------------X-Box 360 Controller ----------------------------------------
