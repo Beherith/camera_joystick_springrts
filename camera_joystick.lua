@@ -9,9 +9,6 @@ function widget:GetInfo()
     enabled   = true  --  loaded by default?
   }
 end
--- TODO:
--- debounce buttons
--- custom button handlers
 ---------------------INFO------------------------
 -- UNCOMMENT YOUR DEVICE, the button mapping may be incorrect, it was taken from : 
 -- https://www.pygame.org/docs/ref/joystick.html
@@ -30,6 +27,7 @@ local DpadDown = {'hats',1,-1} -- decrease speed
 local DpadRight = {'hats',2,1} -- increase smoothing
 local DpadLeft = {'hats',2,-1} -- decrease smoothing
 local Abutton = {'buttons',1,1} -- toggle debug print mode
+
 
 --[[
 ---------------------X-Box 360 Controller ----------------------------------------
@@ -62,6 +60,12 @@ local DpadRight = {'buttons',15,1} -- increase smoothing
 local DpadLeft = {'buttons',14,1} -- decrease smoothing
 local Abutton = {'buttons',1,1} -- toggle debug print mode
 ]]--
+
+------------- BIND COMMANDS TO BUTTONS DEBOUNCED! -------------------------------
+local buttonCommands = { -- key is button number, value is command like you would type into console without the beginning /
+  [2] = "pause",
+}
+
 --------------------------------------------------------------------------------
 local spGetCameraState   = Spring.GetCameraState
 local spGetCameraVectors = Spring.GetCameraVectors
@@ -73,12 +77,13 @@ local port = "51234"
 local client
 local set
 local isConnected = false
-local movemult = 10.0
-local rotmult = 1.0
+local movemult = 10.0 -- move speed multiplier
+local rotmult = 1.0  -- rotation speed multiplier
 local movechangefactor = 1.01
 local smoothchangefactor = 0.01
 local joystate = {}
-local smoothing = 0.9
+local smoothing = 0.9  --amount of smoothing
+local analogexponent = 1.8 -- amount of analog stick exponentiation
 local debugMode = false
 --------------------------------------------------------------------------------
 
@@ -141,6 +146,14 @@ local function SocketDataReceived(sock, str)
       joystate.axes[i] = smoothing*joystate.axes[i] + (1-smoothing) * a
     end
     joystate.hats = newjoystate.hats
+    for btnindex, cmd in pairs(buttonCommands) do
+      if joystate.buttons[btnindex] then
+        if joystate.buttons[btnindex] == 0 and newjoystate.buttons[btnindex] == 1 then
+          Spring.Echo("Button",btnindex,"pressed, sending command",cmd)
+          Spring.SendCommands({cmd})
+        end
+      end
+    end
     joystate.buttons = newjoystate.buttons
   end
 end
@@ -178,6 +191,14 @@ local function norm2d(x,y)
   return x/l, y/l
 end
 
+local function axesexponent(axin)
+  if axin >= 0 then
+    return math.pow(axin, analogexponent)
+  else
+    return -1* math.pow(-1*axin, analogexponent)
+  end
+end
+
 function widget:Update(dt) -- dt in seconds
   if set==nil or #set<=0 then
     return
@@ -211,31 +232,31 @@ function widget:Update(dt) -- dt in seconds
     if joystate[Abutton[1]][Abutton[2]] == 1 then -- A button dumps debug
       Spring.Utilities.TableEcho(joystate)
     end
-    
+
     if joystate[DpadUp[1]][DpadUp[2]] == DpadUp[3] then 
       movemult = movemult * movechangefactor
       rotmult = rotmult * movechangefactor
       Spring.Echo("Speed increased to ",movemult)
     end
-    
+
     if joystate[DpadDown[1]][DpadDown[2]] == DpadDown[3] then 
       movemult = movemult / movechangefactor
       rotmult = rotmult / movechangefactor
       Spring.Echo("Speed decreased to ",movemult)
     end
-    
+
     if joystate[DpadRight[1]][DpadRight[2]] == DpadRight[3] then 
       smoothing = smoothchangefactor * 1.0 + (1.0 - smoothchangefactor ) * smoothing
       Spring.Echo("Smoothing increased to ",smoothing)
     end
-    
+
     if joystate[DpadLeft[1]][DpadLeft[2]] == DpadLeft[3] then 
       smoothing = (1.0 - smoothchangefactor ) * smoothing
       Spring.Echo("Smoothing decreased to ",smoothing)
     end
-    
+
     local frameSpeed = 1.0 -- this tries to work around fps dips
-    if dt < 1.0/75 or dt > 1.0/45 then -- correct for <50 fps and >70fps as there is some jitter in frames
+    if (dt>0)  and (dt < 1.0/75 or dt > 1.0/45) then -- correct for <45 fps and >75fps as there is some jitter in frames
       frameSpeed = 60* dt
       if debugMode then Spring.Echo("speed correction",dt,frameSpeed) end
     end
@@ -244,29 +265,32 @@ function widget:Update(dt) -- dt in seconds
     if debugMode and Spring.GetGameFrame() %60 ==0 then
       Spring.Echo(ndx, ndz, cs.dx, cs.dy, cs.dz)
     end
-    
+
     -- Move left-right
-    cs.px = cs.px + -1*(ndz * joystate[LeftXAxis[1]][LeftXAxis[2]]) * movemult * frameSpeed -- good
-    cs.pz = cs.pz + (ndx * joystate[LeftXAxis[1]][LeftXAxis[2]]) * movemult * frameSpeed
+    local lrmove = axesexponent(joystate[LeftXAxis[1]][LeftXAxis[2]])
+    cs.px = cs.px + -1*(ndz * lrmove) * movemult * frameSpeed -- good
+    cs.pz = cs.pz + (ndx * lrmove) * movemult * frameSpeed
 
     -- Move forward-backward
-    cs.px = cs.px + -1*(ndx * joystate[LeftYAxis[1]][LeftYAxis[2]]) * movemult * frameSpeed
-    cs.pz = cs.pz + -1*(ndz * joystate[LeftYAxis[1]][LeftYAxis[2]]) * movemult * frameSpeed
+    local fbmove = axesexponent(joystate[LeftYAxis[1]][LeftYAxis[2]])
+    cs.px = cs.px + -1*(ndx * fbmove) * movemult * frameSpeed
+    cs.pz = cs.pz + -1*(ndz * fbmove) * movemult * frameSpeed
 
     -- Turn left-right
-    local rotYx, rotYy, rotYz = rotateVector({cs.dx, cs.dy, cs.dz}, {0,1,0} , -1.0* joystate[RightXAxis[1]][RightXAxis[2]] * rotmult * frameSpeed)
+    local lrturn = axesexponent(joystate[RightXAxis[1]][RightXAxis[2]])
+    local rotYx, rotYy, rotYz = rotateVector({cs.dx, cs.dy, cs.dz}, {0,1,0} , -1.0*  lrturn * rotmult * frameSpeed)
     cs.dx = rotYx
     cs.dy = rotYy
     cs.dz = rotYz
     -- Turn up-down
-    local turnupdown = joystate[RightYAxis[1]][RightYAxis[2]]
+    local turnupdown = axesexponent(joystate[RightYAxis[1]][RightYAxis[2]])
     if not((cs.dy < -0.98 and turnupdown >= 0) or (cs.dy > 0.98 and turnupdown <= 0) )  then -- gimbal lock prevention
       local rotUpx, rotUpy, rotUpz = rotateVector({cs.dx, cs.dy, cs.dz}, {ndz,0,-ndx} , turnupdown * rotmult * frameSpeed)
       cs.dx = rotUpx
       cs.dy = rotUpy
       cs.dz = rotUpz 
     end
-    
+
     -- Move up-down
     cs.py = cs.py - (1.0 + joystate[RightTrigger[1]][RightTrigger[2]]) * movemult/2 * frameSpeed
     if LeftTrigger[1] == 'axes' then
@@ -277,7 +301,7 @@ function widget:Update(dt) -- dt in seconds
         joystate[RightTrigger[1]][RightTrigger[2]] = -1
       end
     end
-    
+
     spSetCameraState(cs)
   end
 
