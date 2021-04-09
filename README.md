@@ -25,3 +25,4 @@ Found a joystick: XiaoMi Bluetooth Wireless GameController , with 8 axes and 21 
 Notes:
 
 Your game needs  Spring.Utilities.json.decode(str) widget-side for this to work.
+Also for BAR replays, this wont work on replays older than 2021 apr 7
