@@ -12,14 +12,23 @@ end
 ---------------------INFO------------------------
 -- UNCOMMENT YOUR DEVICE, the button mapping may be incorrect, it was taken from : 
 -- https://www.pygame.org/docs/ref/joystick.html
+-- Use AntiMicro to configure commands for OBS, and to get button/axis numbers in 1-based Lua form: 
+-- https://github.com/AntiMicro/antimicro/releases/tag/2.23
+--   Y
+-- X   B
+--   A
 
+-- A button pause
+-- B button hide interface
+-- X bound via antimicro to F9 (obs start recording button)
+-- Y nothing yet
 
 ---------------------Xiaomi Wireless----------------------------------------
 -- Each input is a table of {'axes'|'buttons'|'hats', index (lua 1-based), direction (1 | -1)}
 local LeftXAxis = {'axes',1,1} -- move left-right
 local LeftYAxis = {'axes',2,1} -- move forward-backward
 local RightXAxis = {'axes',3,1} --turn left-right
-local RightYAxis = {'axes',6,1} --turn up-down
+local RightYAxis = {'axes',66,1} --turn up-down
 local RightTrigger = {'axes',8,1} -- move up
 local LeftTrigger = {'buttons',9, 1} --move down
 local DpadUp = {'hats',1,1} -- increase speed
@@ -27,7 +36,13 @@ local DpadDown = {'hats',1,-1} -- decrease speed
 local DpadRight = {'hats',2,1} -- increase smoothing
 local DpadLeft = {'hats',2,-1} -- decrease smoothing
 local Abutton = {'buttons',1,1} -- toggle debug print mode
-
+local Bbutton = {'buttons',2,1} -- toggle debug print mode
+local Xbutton = {'buttons',4,1} -- toggle debug print mode
+local Ybutton = {'buttons',5,1} -- toggle debug print mode
+local LShoulderbutton = {'buttons',7,1} -- decrease game speed
+local RShoulderbutton = {'buttons',8,1} -- increase game speed
+local RStickButton = {'buttons',50,1} -- select unit nearest to center of screen? TODO
+local LStickButton = {'buttons',"shart",1} -- delect all? TODO
 
 --[[
 ---------------------X-Box 360 Controller ----------------------------------------
@@ -63,7 +78,19 @@ local Abutton = {'buttons',1,1} -- toggle debug print mode
 
 ------------- BIND COMMANDS TO BUTTONS DEBOUNCED! -------------------------------
 local buttonCommands = { -- key is button number, value is command like you would type into console without the beginning /
-  [2] = "pause",
+  [Abutton[2]] = function() Spring.SendCommands("pause") end,
+  [Bbutton[2]] = function() Spring.SendCommands("hideinterface") end, 
+  [LShoulderbutton[2]] = function() Spring.SendCommands("slowdown") end,
+  [RShoulderbutton[2]] = function() Spring.SendCommands("speedup") end,
+
+  [RStickButton[2]] = function()  
+		local vsx, vsy = Spring.GetViewSize()
+		local tx,ty,tz = Spring.TraceScreenRay(vsx, vsy, true)  -- only return coord
+		
+		end,
+  [LStickButton[2]] = function() end,
+
+  
 }
 
 --------------------------------------------------------------------------------
@@ -132,8 +159,24 @@ local function SocketConnect(host, port)
 end
 
 function widget:Initialize()
-  dumpConfig()
+  if debugMode then dumpConfig() end
   SocketConnect(host, port)
+end
+
+local function joystatetostr(js)
+	local jstr = "buttons = ["
+	for i,n in ipairs(js.buttons) do
+		jstr = jstr .. " " .. tostring(n)
+	end
+	jstr = jstr .. '] hats = ['
+	for i, n in ipairs(js.hats) do
+		jstr = jstr .. " "..tostring(n)
+	end
+	jstr = jstr .. '] axes = ['
+	for i, n in ipairs(js.axes) do
+		jstr = jstr .. string.format(" %.2f",n)
+	end
+	return jstr .. ']'
 end
 
 local function SocketDataReceived(sock, str)
@@ -141,16 +184,28 @@ local function SocketDataReceived(sock, str)
   local newjoystate = Spring.Utilities.json.decode(str)
   if joystate.axes == nil then
     joystate = newjoystate
+	-- validate all defined controls:
+	for i, but in ipairs({ LeftXAxis, LeftYAxis, RightXAxis, RightYAxis, RightTrigger, LeftTrigger, DpadUp, DpadDown, DpadRight, DpadLeft, Abutton, Bbutton, Xbutton,Ybutton, LShoulderbutton ,RShoulderbutton, RStickButton , LStickButton }) do 
+		if but and joystate[but[1]][but[2]] == nil then 
+			Spring.Echo(joystatetostr(js))
+			Spring.Echo("Warning: control missing:",but[1],but[2]) 
+		end
+	end
+	
   else
     for i,a in ipairs(newjoystate.axes) do
       joystate.axes[i] = smoothing*joystate.axes[i] + (1-smoothing) * a
     end
-    joystate.hats = newjoystate.hats
+	if joystate.hats then
+		joystate.hats = newjoystate.hats
+	else 
+		joystate.hats = {} 
+	end
     for btnindex, cmd in pairs(buttonCommands) do
       if joystate.buttons[btnindex] then
         if joystate.buttons[btnindex] == 0 and newjoystate.buttons[btnindex] == 1 then
-          Spring.Echo("Button",btnindex,"pressed, sending command",cmd)
-          Spring.SendCommands({cmd})
+          Spring.Echo("Button",btnindex,"pressed, sending command")
+          cmd()
         end
       end
     end
@@ -199,6 +254,7 @@ local function axesexponent(axin)
   end
 end
 
+
 function widget:Update(dt) -- dt in seconds
   if set==nil or #set<=0 then
     return
@@ -229,28 +285,28 @@ function widget:Update(dt) -- dt in seconds
 
   if cs.name == "rot" and joystate.axes then
     --Spring.Utilities.TableEcho(cs)
-    if joystate[Abutton[1]][Abutton[2]] == 1 then -- A button dumps debug
-      Spring.Utilities.TableEcho(joystate)
+    if joystate[Ybutton[1]][Ybutton[2]] and joystate[Ybutton[1]][Ybutton[2]] == 1 then -- A button dumps debug
+      Spring.Echo(joystatetostr(joystate))
     end
 
-    if joystate[DpadUp[1]][DpadUp[2]] == DpadUp[3] then 
+    if joystate[DpadUp[1]][DpadUp[2]] and joystate[DpadUp[1]][DpadUp[2]] == DpadUp[3] then 
       movemult = movemult * movechangefactor
       rotmult = rotmult * movechangefactor
       Spring.Echo("Speed increased to ",movemult)
     end
 
-    if joystate[DpadDown[1]][DpadDown[2]] == DpadDown[3] then 
+    if joystate[DpadDown[1]][DpadDown[2]] and joystate[DpadDown[1]][DpadDown[2]] == DpadDown[3] then 
       movemult = movemult / movechangefactor
       rotmult = rotmult / movechangefactor
       Spring.Echo("Speed decreased to ",movemult)
     end
 
-    if joystate[DpadRight[1]][DpadRight[2]] == DpadRight[3] then 
+    if joystate[DpadRight[1]][DpadRight[2]] and joystate[DpadRight[1]][DpadRight[2]] == DpadRight[3] then 
       smoothing = smoothchangefactor * 1.0 + (1.0 - smoothchangefactor ) * smoothing
       Spring.Echo("Smoothing increased to ",smoothing)
     end
 
-    if joystate[DpadLeft[1]][DpadLeft[2]] == DpadLeft[3] then 
+    if joystate[DpadLeft[1]][DpadLeft[2]] and joystate[DpadLeft[1]][DpadLeft[2]] == DpadLeft[3] then 
       smoothing = (1.0 - smoothchangefactor ) * smoothing
       Spring.Echo("Smoothing decreased to ",smoothing)
     end
@@ -267,40 +323,50 @@ function widget:Update(dt) -- dt in seconds
     end
 
     -- Move left-right
-    local lrmove = axesexponent(joystate[LeftXAxis[1]][LeftXAxis[2]])
-    cs.px = cs.px + -1*(ndz * lrmove) * movemult * frameSpeed -- good
-    cs.pz = cs.pz + (ndx * lrmove) * movemult * frameSpeed
+	if joystate[LeftXAxis[1]][LeftXAxis[2]] then
+		local lrmove = axesexponent(joystate[LeftXAxis[1]][LeftXAxis[2]])
+		cs.px = cs.px + -1*(ndz * lrmove) * movemult * frameSpeed -- good
+		cs.pz = cs.pz + (ndx * lrmove) * movemult * frameSpeed
+	end
 
     -- Move forward-backward
-    local fbmove = axesexponent(joystate[LeftYAxis[1]][LeftYAxis[2]])
-    cs.px = cs.px + -1*(ndx * fbmove) * movemult * frameSpeed
-    cs.pz = cs.pz + -1*(ndz * fbmove) * movemult * frameSpeed
-
+	if joystate[LeftYAxis[1]][LeftYAxis[2]] then
+		local fbmove = axesexponent(joystate[LeftYAxis[1]][LeftYAxis[2]])
+		cs.px = cs.px + -1*(ndx * fbmove) * movemult * frameSpeed
+		cs.pz = cs.pz + -1*(ndz * fbmove) * movemult * frameSpeed
+	end
+	
     -- Turn left-right
-    local lrturn = axesexponent(joystate[RightXAxis[1]][RightXAxis[2]])
-    local rotYx, rotYy, rotYz = rotateVector({cs.dx, cs.dy, cs.dz}, {0,1,0} , -1.0*  lrturn * rotmult * frameSpeed)
-    cs.dx = rotYx
-    cs.dy = rotYy
-    cs.dz = rotYz
+	if joystate[RightXAxis[1]][RightXAxis[2]] then
+		local lrturn = axesexponent(joystate[RightXAxis[1]][RightXAxis[2]])
+		local rotYx, rotYy, rotYz = rotateVector({cs.dx, cs.dy, cs.dz}, {0,1,0} , -1.0*  lrturn * rotmult * frameSpeed)
+		cs.dx = rotYx
+		cs.dy = rotYy
+		cs.dz = rotYz
+	end
     -- Turn up-down
-    local turnupdown = axesexponent(joystate[RightYAxis[1]][RightYAxis[2]])
-    if not((cs.dy < -0.98 and turnupdown >= 0) or (cs.dy > 0.98 and turnupdown <= 0) )  then -- gimbal lock prevention
-      local rotUpx, rotUpy, rotUpz = rotateVector({cs.dx, cs.dy, cs.dz}, {ndz,0,-ndx} , turnupdown * rotmult * frameSpeed)
-      cs.dx = rotUpx
-      cs.dy = rotUpy
-      cs.dz = rotUpz 
-    end
+	if joystate[RightYAxis[1]][RightYAxis[2]] then
+		local turnupdown = axesexponent(joystate[RightYAxis[1]][RightYAxis[2]])
+		if not((cs.dy < -0.98 and turnupdown >= 0) or (cs.dy > 0.98 and turnupdown <= 0) )  then -- gimbal lock prevention
+		  local rotUpx, rotUpy, rotUpz = rotateVector({cs.dx, cs.dy, cs.dz}, {ndz,0,-ndx} , turnupdown * rotmult * frameSpeed)
+		  cs.dx = rotUpx
+		  cs.dy = rotUpy
+		  cs.dz = rotUpz 
+		end
+	end
 
     -- Move up-down
-    cs.py = cs.py - (1.0 + joystate[RightTrigger[1]][RightTrigger[2]]) * movemult/2 * frameSpeed
-    if LeftTrigger[1] == 'axes' then
-      cs.py = cs.py + (1.0 + joystate[LeftTrigger[1]][LeftTrigger[2]]) * movemult/2 * frameSpeed
-    else --probably a button
-      cs.py = cs.py + joystate[LeftTrigger[1]][LeftTrigger[2]] * movemult * frameSpeed
-      if joystate[LeftTrigger[1]][LeftTrigger[2]] == LeftTrigger[3] then
-        joystate[RightTrigger[1]][RightTrigger[2]] = -1
-      end
-    end
+	if joystate[RightTrigger[1]][RightTrigger[2]] and joystate[LeftTrigger[1]][LeftTrigger[2]] then
+		cs.py = cs.py - (1.0 + joystate[RightTrigger[1]][RightTrigger[2]]) * movemult/2 * frameSpeed
+		if LeftTrigger[1] == 'axes' then
+		  cs.py = cs.py + (1.0 + joystate[LeftTrigger[1]][LeftTrigger[2]]) * movemult/2 * frameSpeed
+		else --probably a button
+		  cs.py = cs.py + joystate[LeftTrigger[1]][LeftTrigger[2]] * movemult * frameSpeed
+		  if joystate[LeftTrigger[1]][LeftTrigger[2]] == LeftTrigger[3] then
+			joystate[RightTrigger[1]][RightTrigger[2]] = -1
+		  end
+		end
+	end
 
     spSetCameraState(cs)
   end
