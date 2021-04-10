@@ -193,7 +193,7 @@ local function SocketDataReceived(sock, str)
 	-- validate all defined controls:
 	for i, but in ipairs({ LeftXAxis, LeftYAxis, RightXAxis, RightYAxis, RightTrigger, LeftTrigger, DpadUp, DpadDown, DpadRight, DpadLeft, Abutton, Bbutton, Xbutton,Ybutton, LShoulderbutton ,RShoulderbutton, RStickButton , LStickButton }) do 
 		if but and joystate[but[1]][but[2]] == nil then 
-			Spring.Echo(joystatetostr(js))
+			Spring.Echo(joystatetostr(joystate))
 			Spring.Echo("Warning: control missing:",but[1],but[2]) 
 		end
 	end
