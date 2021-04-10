@@ -20,8 +20,8 @@ end
 
 -- A button pause
 -- B button hide interface
--- X bound via antimicro to F9 (obs start recording button)
--- Y nothing yet
+-- X toggle los
+-- Y debug, bound via antimicro to F9 (obs start recording button)
 
 ---------------------Xiaomi Wireless----------------------------------------
 -- Each input is a table of {'axes'|'buttons'|'hats', index (lua 1-based), direction (1 | -1)}
@@ -35,10 +35,10 @@ local DpadUp = {'hats',1,1} -- increase speed
 local DpadDown = {'hats',1,-1} -- decrease speed
 local DpadRight = {'hats',2,1} -- increase smoothing
 local DpadLeft = {'hats',2,-1} -- decrease smoothing
-local Abutton = {'buttons',1,1} -- toggle debug print mode
-local Bbutton = {'buttons',2,1} -- toggle debug print mode
-local Xbutton = {'buttons',4,1} -- toggle debug print mode
-local Ybutton = {'buttons',5,1} -- toggle debug print mode
+local Abutton = {'buttons',1,1} -- pause game
+local Bbutton = {'buttons',2,1} -- hide interface
+local Xbutton = {'buttons',4,1} -- toggle los 
+local Ybutton = {'buttons',5,1} -- print joystick status
 local LShoulderbutton = {'buttons',7,1} -- decrease game speed
 local RShoulderbutton = {'buttons',8,1} -- increase game speed
 local RStickButton = {'buttons',14,1} -- select unit nearest to center of screen? TODO
@@ -57,7 +57,14 @@ local DpadUp = {'hats',1,1} -- increase speed
 local DpadDown = {'hats',1,-1} -- decrease speed
 local DpadRight = {'hats',2,1} -- increase smoothing
 local DpadLeft = {'hats',2,-1} -- decrease smoothing
-local Abutton = {'buttons',1,1} -- toggle debug print mode
+local Abutton = {'buttons',1,1} -- pause game
+local Bbutton = {'buttons',2,1} -- hide interface
+local Xbutton = {'buttons',3,1} -- toggle los 
+local Ybutton = {'buttons',4,1} -- print joystick status
+local LShoulderbutton = {'buttons',5,1} -- decrease game speed
+local RShoulderbutton = {'buttons',6,1} -- increase game speed
+local RStickButton = {'buttons',10,1} -- select unit nearest to center of screen? TODO
+local LStickButton = {'buttons',9,1} -- delect all? TODO
 ]]--
 
 --[[
@@ -73,24 +80,23 @@ local DpadUp = {'buttons',12,1} -- increase speed
 local DpadDown = {'buttons',13,1} -- decrease speed
 local DpadRight = {'buttons',15,1} -- increase smoothing
 local DpadLeft = {'buttons',14,1} -- decrease smoothing
-local Abutton = {'buttons',1,1} -- toggle debug print mode
+local Abutton = {'buttons',1,1} -- cross button, pause game
+local Bbutton = {'buttons',2,1} -- circle button, hide interface
+local Xbutton = {'buttons',3,1} -- square button, toggle los 
+local Ybutton = {'buttons',4,1} -- triangle button, print joystick status
+local LShoulderbutton = {'buttons',10,1} -- decrease game speed
+local RShoulderbutton = {'buttons',11,1} -- increase game speed
+local RStickButton = {'buttons',9,1} -- select unit nearest to center of screen? TODO
+local LStickButton = {'buttons',8,1} -- delect all? TODO
 ]]--
 
 ------------- BIND COMMANDS TO BUTTONS DEBOUNCED! -------------------------------
 local buttonCommands = { -- key is button number, value is command like you would type into console without the beginning /
   [Abutton[2]] = function() Spring.SendCommands("pause") end,
   [Bbutton[2]] = function() Spring.SendCommands("hideinterface") end, 
+  [Xbutton[2]] = function() Spring.SendCommands("togglelos") end, 
   [LShoulderbutton[2]] = function() Spring.SendCommands("slowdown") end,
   [RShoulderbutton[2]] = function() Spring.SendCommands("speedup") end,
-
-  [RStickButton[2]] = function()  
-		local vsx, vsy = Spring.GetViewSize()
-		local tx,ty,tz = Spring.TraceScreenRay(vsx, vsy, true)  -- only return coord
-		
-		end,
-  [LStickButton[2]] = function() end,
-
-  
 }
 
 --------------------------------------------------------------------------------
