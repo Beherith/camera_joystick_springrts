@@ -14,7 +14,9 @@ Found a joystick: XiaoMi Bluetooth Wireless GameController , with 8 axes and 21 
 
 4. Add camera_joystick to your /luaui/widgets folder, open it up and uncomment the right configuration for your ps4 or Xbox360 controller (they may be incorrect)
 
-5. Launch your game, enable the widget in f11 mode, and make sure to change camera mode to **rotateable overhead camera (CTRL+F4)** and fly around!
+5. Disable the CameraFlip widget to prevent flipbacks when turning cam around
+
+6. Launch your game, enable the widget in f11 mode, and make sure to change camera mode to **rotateable overhead camera (CTRL+F4)** and fly around!
 
 
 - Left stick move camera 
