@@ -91,6 +91,30 @@ local RStickButton = {'buttons',9,1} -- select unit nearest to center of screen?
 local LStickButton = {'buttons',8,1} -- delect all? TODO
 ]]--
 
+--[[
+----------------------------------- Playstation 3 Controller -----------------------------------------
+----Combined with ScpToolikit https://www.lifewire.com/how-to-connect-ps3-controller-to-pc-4589297----
+-- Each input is a table of {'axes'|'buttons'|'hats', index (lua 1-based), direction (1 | -1)}
+local LeftXAxis = {'axes',1,1} -- move left-right
+local LeftYAxis = {'axes',2,1} -- move forward-backward
+local RightXAxis = {'axes',3,1} --turn left-right
+local RightYAxis = {'axes',4,1} --turn up-down
+local RightTrigger = {'axes',6,1} -- move up
+local LeftTrigger = {'axes',5, 1} --move down
+local DpadUp = {'hats',1,1} -- increase speed
+local DpadDown = {'hats',1,-1} -- decrease speed
+local DpadRight = {'hats',2,1} -- increase smoothing
+local DpadLeft = {'hats',2,-1} -- decrease smoothing
+local Abutton = {'buttons',1,1} -- cross button, pause game
+local Bbutton = {'buttons',2,1} -- circle button, hide interface
+local Xbutton = {'buttons',3,1} -- square button, toggle los 
+local Ybutton = {'buttons',4,1} -- triangle button, print joystick status
+local LShoulderbutton = {'buttons',5,1} -- decrease game speed
+local RShoulderbutton = {'buttons',6,1} -- increase game speed
+local RStickButton = {'buttons',9,1} -- select unit nearest to center of screen? TODO
+local LStickButton = {'buttons',8,1} -- delect all? TODO
+]]--
+
 ------------- BIND COMMANDS TO BUTTONS DEBOUNCED! -------------------------------
 local buttonCommands = { -- key is button number, value is command like you would type into console without the beginning /
   [Abutton[2]] = function() Spring.SendCommands("pause") end,
