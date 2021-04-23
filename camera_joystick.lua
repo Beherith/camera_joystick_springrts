@@ -43,16 +43,16 @@ local LShoulderbutton = {'buttons',7,1} -- decrease game speed
 local RShoulderbutton = {'buttons',8,1} -- increase game speed
 local RStickButton = {'buttons',14,1} -- select unit nearest to center of screen? TODO
 local LStickButton = {'buttons',15,1} -- delect all? TODO
-
+local DeadZone = 0
 --[[
 ---------------------X-Box 360 Controller ----------------------------------------
 -- Each input is a table of {'axes'|'buttons'|'hats', index (lua 1-based), direction (1 | -1)}
 local LeftXAxis = {'axes',1,1} -- move left-right
 local LeftYAxis = {'axes',2,1} -- move forward-backward
-local RightXAxis = {'axes',4,1} --turn left-right
-local RightYAxis = {'axes',5,1} --turn up-down
+local RightXAxis = {'axes',3,1} --turn left-right
+local RightYAxis = {'axes',4,1} --turn up-down
 local RightTrigger = {'axes',6,1} -- move up
-local LeftTrigger = {'axes',3, 1} --move down
+local LeftTrigger = {'axes',5, 1} --move down
 local DpadUp = {'hats',1,1} -- increase speed
 local DpadDown = {'hats',1,-1} -- decrease speed
 local DpadRight = {'hats',2,1} -- increase smoothing
@@ -65,6 +65,7 @@ local LShoulderbutton = {'buttons',5,1} -- decrease game speed
 local RShoulderbutton = {'buttons',6,1} -- increase game speed
 local RStickButton = {'buttons',10,1} -- select unit nearest to center of screen? TODO
 local LStickButton = {'buttons',9,1} -- delect all? TODO
+local DeadZone = 0.05
 ]]--
 
 --[[
@@ -200,6 +201,7 @@ local function SocketDataReceived(sock, str)
 	
   else
     for i,a in ipairs(newjoystate.axes) do
+	if DeadZone and math.abs(newjoystate.axes[i] ) < DeadZone then newjoystate.axes[i] = 0 end
       joystate.axes[i] = smoothing*joystate.axes[i] + (1-smoothing) * a
     end
 	if joystate.hats then
