@@ -209,10 +209,10 @@ local function joystatetostr(js)
 	end
 	return jstr .. ']'
 end
-
+local Json = Json or VFS.Include('common/luaUtilities/json.lua')
 local function SocketDataReceived(sock, str)
   --Spring.Echo(str)
-  local newjoystate = Spring.Utilities.json.decode(str)
+  local newjoystate = Json.decode(str)
   if joystate.axes == nil then
     joystate = newjoystate
 	-- validate all defined controls:
