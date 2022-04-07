@@ -205,6 +205,7 @@ local port = "51234"
 local client
 local set
 local isConnected = false
+local mincameraheight = 32 -- min camera Y in elmos
 local movemult = 10.0 -- move speed multiplier
 local rotmult = 1.0	-- rotation speed multiplier
 local movechangefactor = 1.01
@@ -307,13 +308,18 @@ local function joystatetostr(js)
 	return jstr .. ']'
 end
 local Json = Json or VFS.Include('common/luaUtilities/json.lua')
+
+local buttonorder = { LeftXAxis, LeftYAxis, RightXAxis, RightYAxis, RightTrigger, LeftTrigger, DpadUp, DpadDown, DpadRight, DpadLeft, Abutton, Bbutton, Xbutton,Ybutton, LShoulderbutton ,RShoulderbutton, RStickButton , LStickButton }
+local oldjoystate = nil
 local function SocketDataReceived(sock, str)
 	--Spring.Echo(str)
+	
 	local newjoystate = Json.decode(str)
+	
 	if joystate.axes == nil then
 		joystate = newjoystate
 	-- validate all defined controls:
-	for i, but in ipairs({ LeftXAxis, LeftYAxis, RightXAxis, RightYAxis, RightTrigger, LeftTrigger, DpadUp, DpadDown, DpadRight, DpadLeft, Abutton, Bbutton, Xbutton,Ybutton, LShoulderbutton ,RShoulderbutton, RStickButton , LStickButton }) do 
+	for i, but in ipairs(buttonorder) do 
 		if but and joystate[but[1]][but[2]] == nil then 
 			Spring.Echo(joystatetostr(joystate))
 			Spring.Echo("Warning: control missing:",but[1],but[2]) 
@@ -349,12 +355,14 @@ local function SocketClosed(sock)
 	Spring.Echo("Camera Joystick: closed connection")
 end
 
+local matrix = {}
+matrix[0],matrix[1],matrix[2] = {},{},{};
+
 local function rotateVector(vector,axis,phi)
 	local rcos = math.cos(math.pi*phi/180);
 	local rsin = math.sin(math.pi*phi/180);
 	local u,v,w = axis[1],axis[2],axis[3];
-	local matrix = {};
-	matrix[0],matrix[1],matrix[2] = {},{},{};
+	
 
 	matrix[0][0] =		rcos + u*u*(1-rcos);
 	matrix[1][0] =	w * rsin + v*u*(1-rcos);
@@ -454,52 +462,57 @@ function widget:Update(dt) -- dt in seconds
 			Spring.Echo(ndx, ndz, cs.dx, cs.dy, cs.dz)
 		end
 
-		-- Move left-right
-	if joystate[LeftXAxis[1]][LeftXAxis[2]] then
-		local lrmove = axesexponent(joystate[LeftXAxis[1]][LeftXAxis[2]])
-		cs.px = cs.px + -1*(ndz * lrmove) * movemult * frameSpeed -- good
-		cs.pz = cs.pz + (ndx * lrmove) * movemult * frameSpeed
-	end
-
-		-- Move forward-backward
-	if joystate[LeftYAxis[1]][LeftYAxis[2]] then
-		local fbmove = axesexponent(joystate[LeftYAxis[1]][LeftYAxis[2]])
-		cs.px = cs.px + -1*(ndx * fbmove) * movemult * frameSpeed
-		cs.pz = cs.pz + -1*(ndz * fbmove) * movemult * frameSpeed
-	end
-	
-		-- Turn left-right
-	if joystate[RightXAxis[1]][RightXAxis[2]] then
-		local lrturn = axesexponent(joystate[RightXAxis[1]][RightXAxis[2]])
-		local rotYx, rotYy, rotYz = rotateVector({cs.dx, cs.dy, cs.dz}, {0,1,0} , -1.0*	lrturn * rotmult * frameSpeed)
-		cs.dx = rotYx
-		cs.dy = rotYy
-		cs.dz = rotYz
-	end
-		-- Turn up-down
-	if joystate[RightYAxis[1]][RightYAxis[2]] then
-		local turnupdown = axesexponent(joystate[RightYAxis[1]][RightYAxis[2]])
-		if not((cs.dy < -0.98 and turnupdown >= 0) or (cs.dy > 0.98 and turnupdown <= 0) )	then -- gimbal lock prevention
-			local rotUpx, rotUpy, rotUpz = rotateVector({cs.dx, cs.dy, cs.dz}, {ndz,0,-ndx} , turnupdown * rotmult * frameSpeed)
-			cs.dx = rotUpx
-			cs.dy = rotUpy
-			cs.dz = rotUpz 
+			-- Move left-right
+		if joystate[LeftXAxis[1]][LeftXAxis[2]] then
+			local lrmove = axesexponent(joystate[LeftXAxis[1]][LeftXAxis[2]])
+			cs.px = cs.px + -1*(ndz * lrmove) * movemult * frameSpeed -- good
+			cs.pz = cs.pz + (ndx * lrmove) * movemult * frameSpeed
 		end
-	end
 
-		-- Move up-down
-	if joystate[RightTrigger[1]][RightTrigger[2]] and joystate[LeftTrigger[1]][LeftTrigger[2]] then
-		cs.py = cs.py - (1.0 + joystate[RightTrigger[1]][RightTrigger[2]]) * movemult/2 * frameSpeed
-		if LeftTrigger[1] == 'axes' then
-			cs.py = cs.py + (1.0 + joystate[LeftTrigger[1]][LeftTrigger[2]]) * movemult/2 * frameSpeed
-		else --probably a button
-			cs.py = cs.py + joystate[LeftTrigger[1]][LeftTrigger[2]] * movemult * frameSpeed
-			if joystate[LeftTrigger[1]][LeftTrigger[2]] == LeftTrigger[3] then
-				joystate[RightTrigger[1]][RightTrigger[2]] = -1
+			-- Move forward-backward
+		if joystate[LeftYAxis[1]][LeftYAxis[2]] then
+			local fbmove = axesexponent(joystate[LeftYAxis[1]][LeftYAxis[2]])
+			cs.px = cs.px + -1*(ndx * fbmove) * movemult * frameSpeed
+			cs.pz = cs.pz + -1*(ndz * fbmove) * movemult * frameSpeed
+		end
+		
+			-- Turn left-right
+		if joystate[RightXAxis[1]][RightXAxis[2]] then
+			local lrturn = axesexponent(joystate[RightXAxis[1]][RightXAxis[2]])
+			local rotYx, rotYy, rotYz = rotateVector({cs.dx, cs.dy, cs.dz}, {0,1,0} , -1.0*	lrturn * rotmult * frameSpeed)
+			cs.dx = rotYx
+			cs.dy = rotYy
+			cs.dz = rotYz
+		end
+			-- Turn up-down
+		if joystate[RightYAxis[1]][RightYAxis[2]] then
+			local turnupdown = axesexponent(joystate[RightYAxis[1]][RightYAxis[2]])
+			if not((cs.dy < -0.98 and turnupdown >= 0) or (cs.dy > 0.98 and turnupdown <= 0) )	then -- gimbal lock prevention
+				local rotUpx, rotUpy, rotUpz = rotateVector({cs.dx, cs.dy, cs.dz}, {ndz,0,-ndx} , turnupdown * rotmult * frameSpeed)
+				cs.dx = rotUpx
+				cs.dy = rotUpy
+				cs.dz = rotUpz 
 			end
 		end
-	end
 
+			-- Move up-down
+		if joystate[RightTrigger[1]][RightTrigger[2]] and joystate[LeftTrigger[1]][LeftTrigger[2]] then
+			cs.py = cs.py - (1.0 + joystate[RightTrigger[1]][RightTrigger[2]]) * movemult/2 * frameSpeed
+			if LeftTrigger[1] == 'axes' then
+				cs.py = cs.py + (1.0 + joystate[LeftTrigger[1]][LeftTrigger[2]]) * movemult/2 * frameSpeed
+			else --probably a button
+				cs.py = cs.py + joystate[LeftTrigger[1]][LeftTrigger[2]] * movemult * frameSpeed
+				if joystate[LeftTrigger[1]][LeftTrigger[2]] == LeftTrigger[3] then
+					joystate[RightTrigger[1]][RightTrigger[2]] = -1
+				end
+			end
+		end
+		
+		-- Prevent the camera from going too low
+		local gh = Spring.GetGroundHeight(cs.px,cs.pz)
+		cs.py = math.max(mincameraheight, math.max(cs.py , gh + 32))
+		--if cs.py < gh + 32 then cs.py =gh + 32 end 
+		
 		spSetCameraState(cs)
 	end
 
