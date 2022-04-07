@@ -28,6 +28,12 @@ Found a joystick: XiaoMi Bluetooth Wireless GameController , with 8 axes and 21 
 - shoulder buttons change gamespeed
 - d-pad change smoothing/speed
 
+![image](https://user-images.githubusercontent.com/109391/162210678-ebf0c920-cedc-4803-acc7-6ca15b73d5ca.png)
+
+
+https://docs.google.com/presentation/d/1kYI-feiey2BVcSzO1CoZt2x4zrlW7oKdTA4sG3d6RhY/edit?usp=sharing
+
+
 Notes:
 
 Your game needs Spring.Utilities.json.decode(str) widget-side for this to work.
