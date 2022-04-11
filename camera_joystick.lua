@@ -1,22 +1,24 @@
 function widget:GetInfo()
 	return {
 		name			= "Camera Joystick",
-		desc			= "Control Rotateable overhead (CTRL+F4) camera with a joystick",
+		desc			= "Control Rotateable overhead (CTRL+F4) camera with a joystick via joystick server from https://github.com/Beherith/camera_joystick_springrts",
 		author		= "Beherith",
 		date			= "2021.04.06",
-		license	 = "all rights reserved",
+		license	 = "GPL V2, By Beherith (mysterme@gmail.com)",
 		layer		 = 1,		 --	after the normal widgets
-		enabled	 = true	--	loaded by default?
+		enabled	 = false	--	loaded by default?
 	}
 end
 ---------------------INFO------------------------
--- UNCOMMENT YOUR DEVICE, the button mapping may be incorrect, it was taken from : 
+-- 1. Start your joystick server: https://github.com/Beherith/camera_joystick_springrts
+-- 2. Set your controller type with /luaui joystick 
+
 -- https://www.pygame.org/docs/ref/joystick.html
 -- Use AntiMicro to configure commands for OBS, and to get button/axis numbers in 1-based Lua form: 
 -- https://github.com/AntiMicro/antimicro/releases/tag/2.23
---	 Y
--- X	 B
---	 A
+--   Y
+-- X   B
+--   A
 
 -- A button pause
 -- B button hide interface
@@ -251,12 +253,14 @@ local function SocketConnect(host, port)
 	client=socket.tcp()
 	client:settimeout(0)
 	res, err = client:connect(host, port)
-	if not res and not res=="timeout" then
-		Spring.Echo("Error in connect: "..err)
+	if res == nil and err=="timeout" then
+		Spring.Echo("Unable to connect to joystick server: ",res, err, "Restart widget after server is started")
 		return false
 	end
 	set = newset()
 	set:insert(client)
+	
+	Spring.Echo("Connected to joystick server", res, err)
 	return true
 end
 
@@ -288,6 +292,7 @@ end
 
 function widget:Initialize()
 	Spring.SendCommands({"set SmoothTimeOffset 2"})
+	Spring.Echo("Started Camera Joystick, make sure you are running the joystick server, and switch camera to Ctrl+F4")
 	if debugMode then dumpConfig() end
 	SocketConnect(host, port)
 end
