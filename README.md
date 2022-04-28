@@ -12,7 +12,7 @@ Usage:
 
 Found a joystick: XiaoMi Bluetooth Wireless GameController , with 8 axes and 21 buttons 1 hats
 
-4. As of 2022.04.01 this widget is included in the BAR game. Enable it in F11 menu. You can change which controller type you are using by typing /luaui joystick [xbox|xbox360|ps3|ps4]. For other games, add camera_joystick.lua file to your [beyond all reason/data]/luaui/widgets folder (create the folder if it does not exist), open it up in a text editor and uncomment the right configuration for your ps4 or Xbox360 controller (they may be xbox360 is known good, ps3 added too)
+4. As of 2022.04.01 this widget is included in the BAR game. Enable it in F11 menu, scroll down to "Camera Joystick" and click it to enable it (it turns green). You can change which controller type you are using by typing /luaui joystick [xbox|xbox360|ps3|ps4]. For other games, add camera_joystick.lua file to your [beyond all reason/data]/luaui/widgets folder (create the folder if it does not exist), open it up in a text editor and uncomment the right configuration for your ps4 or Xbox360 controller (they may be xbox360 is known good, ps3 added too)
 
 5. Disable the CameraFlip widget (F11 ingame) to prevent flipbacks when turning cam around
 
