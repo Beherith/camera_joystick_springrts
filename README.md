@@ -6,7 +6,7 @@ Usage:
 
 1. Get python3
 
-2. Run "install_and_start_send-joystick.bat", OR open a command window and type: "pip install pygame"  and then "python send-joystick.py" 
+2. Run "install_and_start_send-joystick.bat" (by double clicking it), OR open a command window and type: "pip install pygame"  and then "python send-joystick.py" 
 
 3. This program opens up a TCP server on port 51234, and reports back what kind of joystick it found, e.g.:
 
