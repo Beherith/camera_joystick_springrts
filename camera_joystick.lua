@@ -182,6 +182,33 @@ local function PS3()
 	DeadZone = 0.01
 end
 
+----------------------------------- GuiliKit KingKong 2 Pro Controller -----------------------------------------
+local function KingKong2()
+	----Combined with ScpToolikit https://www.lifewire.com/how-to-connect-ps3-controller-to-pc-4589297----
+	-- Each input is a table of {'axes'|'buttons'|'hats', index (lua 1-based), direction (1 | -1)}
+	LeftXAxis = {'axes',1,1} -- move left-right
+	LeftYAxis = {'axes',2,1} -- move forward-backward
+	RightXAxis = {'axes',4,1} --turn left-right
+	RightYAxis = {'axes',5,1} --turn up-down
+	RightTrigger = {'axes',6,1} -- move up
+	LeftTrigger = {'axes',3, 1} --move down
+	DpadUp = {'hats',1,1} -- increase speed
+	DpadDown = {'hats',1,-1} -- decrease speed
+	DpadRight = {'hats',2,1} -- increase smoothing
+	DpadLeft = {'hats',2,-1} -- decrease smoothing
+	Abutton = {'buttons',1,1} -- cross button, pause game
+	Bbutton = {'buttons',2,1} -- circle button, hide interface
+	Xbutton = {'buttons',3,1} -- square button, toggle los
+	Ybutton = {'buttons',4,1} -- triangle button, print joystick status
+	LShoulderbutton = {'buttons',5,1} -- decrease game speed
+	RShoulderbutton = {'buttons',6,1} -- increase game speed
+	RStickButton = {'buttons',10,1} -- Toggle maximum minimap
+	LStickButton = {'buttons',9,1} -- Toggle defense ranges GL4
+	SelectButton = {'buttons',7,1} -- specfullview
+	StartButton = {'buttons',8,1} -- DOF toggle
+	DeadZone = 0.01
+end
+
 local function toggleRecording() end
 local function togglePlayback() end 
 
@@ -333,15 +360,18 @@ function widget:TextCommand(command)
 		elseif string.find(command, "ps4",nil, true) then 
 			Spring.Echo("Enabling PS4 controller layout")
 			PS4() 
+		elseif string.find(command, "xbox360", nil, true) then
+			Spring.Echo("Enabling XBox 360 controller layout")
+			XBox360()
 		elseif string.find(command, "xbox", nil, true) then 
 			Spring.Echo("Enabling XBox Series S controller layout")
 			XBoxSeriesS() 
-		elseif string.find(command, "xbox360", nil, true) then 
-			Spring.Echo("Enabling XBox 360 controller layout") 
-			XBox360()
 		elseif string.find(command, "xiaomi", nil, true) then 
 			Spring.Echo("Enabling Xiaomi wireless controller layout")
 			XiaomiWireless()
+		elseif string.find(command, "kingkong", nil, true) then
+			Spring.Echo("Enabling KingKong 2 Pro wireless controller layout")
+			KingKong2()
 		else
 			Spring.Echo("Could not find a matching controller type for command", command)
 		end 
@@ -450,6 +480,10 @@ local function norm2d(x,y)
 	local l = math.sqrt(x*x+y*y)
 	return x/l, y/l
 end
+local function norm3d(x,y,z)
+	local l = math.sqrt(x*x+y*y+z*z)
+	return x/l, y/l, z/l
+end
 
 local function axesexponent(axin)
 	if axin >= 0 then
@@ -459,6 +493,13 @@ local function axesexponent(axin)
 	end
 end
 
+local function getRotFromDir(x,y,z)
+    local fx, fy,fz = norm3d(x,y,z)
+    local rx = math.acos(fy);
+    local ry = math.atan2(fx, -fz);
+    local rz = 0.0;
+    return rx,ry,rz;
+end
 
 function widget:Update(dt) -- dt in seconds	
 	if isplayingback then 
@@ -559,6 +600,10 @@ function widget:Update(dt) -- dt in seconds
 			cs.dx = rotYx
 			cs.dy = rotYy
 			cs.dz = rotYz
+			local rYx, rYy, rYz = getRotFromDir(rotYx, rotYy, rotYz)
+			cs.rx = rYx
+			cs.ry = rYy
+			cs.rz = rYz
 		end
 			-- Turn up-down
 		if joystate[RightYAxis[1]][RightYAxis[2]] then
@@ -567,7 +612,11 @@ function widget:Update(dt) -- dt in seconds
 				local rotUpx, rotUpy, rotUpz = rotateVector({cs.dx, cs.dy, cs.dz}, {ndz,0,-ndx} , turnupdown * rotmult * frameSpeed)
 				cs.dx = rotUpx
 				cs.dy = rotUpy
-				cs.dz = rotUpz 
+				cs.dz = rotUpz
+			local rUpx, rUpy, rUpz = getRotFromDir(rotUpx, rotUpy, rotUpz)
+				cs.rx = rUpx
+				cs.ry = rUpy
+				cs.rz = rUpz
 			end
 		end
 
@@ -615,3 +664,4 @@ name : "rot"
 [t=00:13:23.057932][f=0022976]		 oldHeight = 1155.58826
 [t=00:13:23.057932][f=0022976] },
 	]]--
+
