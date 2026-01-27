@@ -209,6 +209,33 @@ local function KingKong2()
 	DeadZone = 0.01
 end
 
+---------------------SteelSeries Stratus+ Controller ----------------------------------------
+
+local function SteelSeriesStratus()
+        -- Each input is a table of {'axes'|'buttons'|'hats', index (lua 1-based), direction (1 | -1)}
+        LeftXAxis = {'axes',1,1} -- move left-right
+        LeftYAxis = {'axes',2,-1} -- move forward-backward, inverted for correct panning
+        RightXAxis = {'axes',3,1} --turn left-right
+        RightYAxis = {'axes',4,1} --turn up-down
+        RightTrigger = {'axes',6,1} -- move up
+        LeftTrigger = {'axes',5, 1} --move down
+        DpadUp = {'hats',1,1} -- increase speed
+        DpadDown = {'hats',1,-1} -- decrease speed
+        DpadRight = {'hats',2,1} -- increase smoothing
+        DpadLeft = {'hats',2,-1} -- decrease smoothing
+        Abutton = {'buttons',1,1} -- pause game
+        Bbutton = {'buttons',2,1} -- hide interface
+        Xbutton = {'buttons',3,1} -- toggle los 
+        Ybutton = {'buttons',4,1} -- print joystick status
+        LShoulderbutton = {'buttons',5,1} -- decrease game speed
+        RShoulderbutton = {'buttons',6,1} -- increase game speed
+        StartButton = {'buttons',7,1}
+        SelectButton = {'buttons',8,1}
+        RStickButton = {'buttons',10,1} -- select unit nearest to center of screen? TODO
+        LStickButton = {'buttons',9,1} -- delect all? TODO
+        DeadZone = 0.10
+end
+
 local function toggleRecording() end
 local function togglePlayback() end 
 

@@ -12,7 +12,7 @@ Usage:
 
 Found a joystick: XiaoMi Bluetooth Wireless GameController , with 8 axes and 21 buttons 1 hats
 
-4. Enable devmode in BAR by typing `/devmode`. Then enable the Camera Joystick widget in the F11 menu, by scrolling down to "Camera Joystick" and click it to enable it (it turns green). You can change which controller type you are using by typing /luaui joystick [xbox|xbox360|ps3|ps4]. For other games, add camera_joystick.lua file to your [beyond all reason/data]/luaui/widgets folder (create the folder if it does not exist), open it up in a text editor and uncomment the right configuration for your ps4 or Xbox360 controller (they may be xbox360 is known good, ps3 added too)
+5. Enable devmode in BAR by typing `/devmode`. Then enable the Camera Joystick widget in the F11 menu, by scrolling down to "Camera Joystick" and click it to enable it (it turns green). You can change which controller type you are using by typing /luaui joystick [xbox|xbox360|ps3|ps4|stratus]. For other games, add camera_joystick.lua file to your [beyond all reason/data]/luaui/widgets folder (create the folder if it does not exist), open it up in a text editor and uncomment the right configuration for your ps4 or Xbox360 controller (they may be xbox360 is known good, ps3 added too)
 
 5. Disable the CameraFlip widget (F11 ingame) to prevent flipbacks when turning cam around.
 
@@ -33,6 +33,18 @@ Found a joystick: XiaoMi Bluetooth Wireless GameController , with 8 axes and 21 
 
 https://docs.google.com/presentation/d/1kYI-feiey2BVcSzO1CoZt2x4zrlW7oKdTA4sG3d6RhY/edit?usp=sharing
 
+
+## Supported Controllers
+
+The widget supports the following controllers (use `/luaui joystick [type]` to switch):
+
+- **xbox**: Xbox Series S/X
+- **xbox360**: Xbox 360
+- **ps3**: PlayStation 3
+- **ps4**: PlayStation 4
+- **xiaomi**: Xiaomi Wireless
+- **kingkong**: GuiliKit KingKong 2 Pro
+- **stratus**: SteelSeries Stratus+ (added support for correct joystick mapping and panning direction)
 
 Notes:
 
